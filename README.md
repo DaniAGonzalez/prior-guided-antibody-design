@@ -83,3 +83,11 @@ IgLM, ESM2 8M, and ImmuneBuilder (ABodyBuilder2 / NanoBodyBuilder2) weights are 
 ## Honest scope
 
 Everything downstream of the binding oracle is **predicted** P(binder) under a **transferred proxy** (the oracle is trained on 10-mers of one framework; the generator makes 8 to 18 mers). No wet lab validation. The contribution is a reproducible **method** and a set of controlled optimization experiments, not a designed therapeutic.
+
+## How to cite
+
+If you use this code or build on it, please cite:
+
+Gonzalez, Daniela A. (2026). *Reinforcement Learning for Antibody CDRH3 Design*.
+Part of the prior-guided-antibody-design project. GitHub repository.
+https://github.com/DaniAGonzalez/prior-guided-antibody-design
