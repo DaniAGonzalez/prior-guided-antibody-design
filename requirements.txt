@@ -1,0 +1,21 @@
+# CPU-only. Core stack for the antibody RL pipeline.
+torch==2.12.1
+numpy
+scipy
+scikit-learn
+matplotlib
+pandas
+biopython
+transformers==4.36.2
+tokenizers==0.15.2
+huggingface-hub==0.20.3
+safetensors==0.4.2
+iglm
+ablang2
+fair-esm
+ImmuneBuilder
+anarci
+freesasa
+joblib
+nbformat
+python-pptx

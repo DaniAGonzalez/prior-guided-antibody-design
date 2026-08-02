@@ -1,0 +1,1 @@
+{"metric": ["uniqueness", "novelty (vs prior)", "diversity", "success rate"], "prior": [1.0, NaN, 0.914, 0.55], "agent": [1.0, 1.0, 0.813, 0.525]}
