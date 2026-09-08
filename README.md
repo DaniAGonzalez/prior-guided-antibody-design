@@ -1,19 +1,28 @@
 # Reinforcement Learning for Antibody CDRH3 Design
 
+*The `prior-guided-antibody-design` repository.*
 
-This project moves the design decision earlier in antibody discovery by making the axes that usually kill a candidate readable on the sequence itself: a CPU only pipeline that fine tunes IgLM with reinforcement learning  toward CDRH3 loops that are developable, human, and HER2 binding, scored by a panel of oracles spanning sequence, structure, and binding.
+This project moves the design decision earlier in antibody discovery by making the axes that usually kill a candidate readable on the sequence itself: a CPU-only pipeline that fine-tunes IgLM with reinforcement learning toward CDRH3 loops that are developable, human, and HER2-binding, scored by a panel of oracles spanning sequence, structure, and binding.
+
+## Quickstart
+
+CPU-only, no GPU required. Python 3.11.
+
+```bash
+pip install -r requirements.txt
+```
+
+Start with `06_binding_oracle_her2.ipynb` — it contains the headline result (HER2 binding 0.30 → ~0.80 across 3 seeds) and runs end to end on a laptop CPU. Notebooks 01–05 build the components it depends on; 07 and 08 extend the analysis.
 
 ## The larger goal: moving the decision point earlier
 
-Antibody discovery spends its money late. Candidates are carried deep into wet lab campaigns before their liabilities (poor developability, immunogenicity, weak binding) surface and kill them. Every late failure is months and reagents already spent.
+This started as a personal project, built after reading how consistently antibody discovery groups describe the same bottleneck: the go/no-go decision sits too late in the timeline. It is now continued as funded research at Northeastern University's Institute for Experiential AI.
 
-The idea behind this project is a single thesis: move the go / no-go decision earlier in time. If we can read the axes that usually fail a candidate (chemical liabilities, humanness, physicochemistry, structural developability, target binding) computationally, on the sequence, before committing, then the choice to advance or drop a design happens sooner and on cheaper evidence. The panel of oracles here is a first concrete instrument for that idea: each oracle makes one liability axis legible at the design stage, and the RL loop shows how a generator can be steered by that combined readout instead of by a single objective.
+Antibody discovery spends its money late. Candidates are carried deep into wet-lab campaigns before their liabilities (poor developability, immunogenicity, weak binding) surface and kill them. Every late failure is months and reagents already spent.
 
-The point is not that these in silico scores replace the assay. It is that the more of the failure surface you see up front, the earlier the decision point moves, and the less you spend learning what you could have known sooner.
+The idea behind this project is a single thesis: move the go/no-go decision earlier in time. If we can read the axes that usually fail a candidate (chemical liabilities, humanness, physicochemistry, structural developability, target binding) computationally, on the sequence, before committing, then the choice to advance or drop a design happens sooner and on cheaper evidence. The panel of oracles here is a first concrete instrument for that idea: each oracle makes one liability axis legible at the design stage, and the RL loop shows how a generator can be steered by that combined readout instead of by a single objective.
 
-## Built to extend
-
-The reward is a panel of independent oracles combined at the end, so the framework grows by adding scorers rather than by rebuilding it. A new liability axis (a second target, an immunogenicity predictor, an expression or aggregation model) enters as one more oracle in the panel, and the same RL loop optimizes against the updated readout. Whether a given axis carries useful signal is then an empirical question the pipeline is set up to answer, as the multimodal test in notebook 08 shows with an honest null result for structure.
+The point is not that these in silico scores replace the assay. It is that the more of the failure surface you see up front, the less you spend learning what you could have known sooner.
 
 ## What this is
 
@@ -23,11 +32,13 @@ A generative antibody model steered by RL: a single generator with an evaluator 
 - **Agent:** a trainable copy of IgLM, updated by RL toward a reward.
 - **Reward (the panel):** separately scored oracles combined at the end.
   - *sequence:* humanness (AbLang2), chemical liabilities (motif regex), physicochemistry (ProtParam)
-  - *structure:* TAP style developability (ABodyBuilder2 fold, ANARCI, SASA patches)
-  - *binding:* HER2 P(binder) from the Mason trastuzumab DMS (ESM2 8M plus logistic regression)
-- **Update:** REINVENT augmented likelihood, log P*(x) = log P_prior(x) + sigma * S(x).
+  - *structure:* TAP-style developability (ABodyBuilder2 fold, ANARCI, SASA patches)
+  - *binding:* HER2 P(binder) from the Mason trastuzumab DMS (ESM2 8M plus logistic regression; held-out AUC `TODO`)
+- **Update:** REINVENT augmented likelihood, log P*(x) = log P_prior(x) + sigma * S(x). Notebook 05 ablates sigma along with batch size and the length guard.
 
-The scientific claims are about optimization dynamics (the loop optimizes an objective when it has headroom), not about experimentally validated binders.
+## Built to extend
+
+The reward is a panel of independent oracles combined at the end, so the framework grows by adding scorers rather than by rebuilding it. A new liability axis (a second target, an immunogenicity predictor, an expression or aggregation model) enters as one more oracle in the panel, and the same RL loop optimizes against the updated readout. Whether a given axis carries useful signal is then an empirical question the pipeline is set up to answer, as the multimodal test in notebook 08 shows with an honest null result for structure.
 
 ## Notebooks
 
@@ -35,11 +46,11 @@ The scientific claims are about optimization dynamics (the loop optimizes an obj
 |---|---|---|
 | 01 | `01_generator.ipynb` | IgLM generator; scaffold, CDRH3 extraction, temperature sweep, EDA |
 | 02 | `02_oracles.ipynb` | Three sequence oracles (humanness / liability / physchem); orthogonality |
-| 03 | `03_oracle_structure.ipynb` | TAP style structural developability oracle; cascade filter |
+| 03 | `03_oracle_structure.ipynb` | TAP-style structural developability oracle; cascade filter |
 | 04 | `04_reward.ipynb` | Weighted sum reward S(x); weight sensitivity; augmented likelihood |
-| 05 | `05_rl_loop.ipynb` | The REINVENT loop; baseline, sigma / batch / length guard ablations, positive control |
+| 05 | `05_rl_loop.ipynb` | The REINVENT loop; baseline, sigma / batch / length-guard ablations, positive control |
 | 06 | `06_binding_oracle_her2.ipynb` | HER2 binding oracle (Mason DMS); oracle ablation; RL headline 0.30 to 0.80; XAI |
-| 07 | `07_multiobjective_pareto.ipynb` | Multi objective Pareto front over all four objectives (the trade off) |
+| 07 | `07_multiobjective_pareto.ipynb` | Multi-objective Pareto front over all four objectives (the trade-off) |
 | 08 | `08_multimodal_reward.ipynb` | Learned multimodal reward (sequence plus structure fusion); honest null result |
 
 ## Repository layout
@@ -54,23 +65,17 @@ structures/  an example folded Fv (.pdb)
 
 ## Key results
 
-- **The loop optimizes when there is headroom.** Developability (already saturated at ~0.76) stays flat; HER2 binding (14% binders at start) rises **0.30 to ~0.80** across 3 seeds, KL proxy to about -10.
+- **The loop optimizes when there is headroom.** Developability (already saturated at ~0.76) stays flat; HER2 binding (14% binders at start) rises **0.30 to ~0.80** across 45 steps and 3 seeds. The KL proxy (agent-to-prior divergence, reported as a negative log-ratio, so lower means further from the prior) reaches about -10 — the agent moves away from the prior without collapsing off-distribution.
 - **Positive control** (tyrosine fraction proxy reward) rises 0.12 to 0.52 across 3 seeds, so the RL machinery provably optimizes.
-- **Sequence and structure are orthogonal** (corr ~ 0). TAP reorders otherwise equal candidates but adds no binding signal over sequence (fusion AUC 0.75 vs sequence only 0.77), an honest negative.
-- **Multi objective Pareto:** binding and developability trade off (corr 0.07); 6/120 loops are non dominated in 2D, 17/120 in 4D.
-- **XAI (saturation mutagenesis):** on the WT trastuzumab loop, position 8 dominates (A to K drops P(binder) 0.97 to 0.22); across the 120 generated loops the signal is distributed with a mild C terminal bias.
+- **Sequence and structure are orthogonal** (corr ~ 0). TAP reorders otherwise equal candidates but adds no binding signal over sequence (fusion AUC 0.75 vs sequence-only 0.77), an honest negative.
+- **Multi-objective Pareto:** binding and developability trade off (corr 0.07); 6/120 loops are non-dominated in 2D, 17/120 in 4D.
+- **XAI (saturation mutagenesis):** on the WT trastuzumab loop, position 8 dominates (A to K drops P(binder) 0.97 to 0.22); across the 120 generated loops the signal is distributed with a mild C-terminal bias.
 
 ## Environment and setup
 
-CPU only; no GPU required. Python 3.11.
-
-```bash
-pip install -r requirements.txt
-```
-
 ### AbLang2 weights (NOT in this repo)
 
-The AbLang2 humanness model weights (~166 MB) exceed GitHub's file size limit and are not included. The `ablang2` package downloads them automatically on first use via `ablang2.pretrained(...)` (see notebook 02, which sets `oracles.ABLANG_MODEL`). If offline, use the package's own weight download utility rather than a hard coded URL, since the hosting location may change.
+The AbLang2 humanness model weights (~166 MB) exceed GitHub's file size limit and are not included. The `ablang2` package downloads them automatically on first use via `ablang2.pretrained(...)` (see notebook 02, which sets `oracles.ABLANG_MODEL`). If offline, use the package's own weight download utility rather than a hard-coded URL, since the hosting location may change.
 
 IgLM, ESM2 8M, and ImmuneBuilder (ABodyBuilder2 / NanoBodyBuilder2) weights are likewise downloaded by their packages on first use.
 
@@ -82,7 +87,11 @@ IgLM, ESM2 8M, and ImmuneBuilder (ABodyBuilder2 / NanoBodyBuilder2) weights are 
 
 ## Honest scope
 
-Everything downstream of the binding oracle is **predicted** P(binder) under a **transferred proxy** (the oracle is trained on 10-mers of one framework; the generator makes 8 to 18 mers). No wet lab validation. The contribution is a reproducible **method** and a set of controlled optimization experiments, not a designed therapeutic.
+Everything downstream of the binding oracle is **predicted** P(binder) under a **transferred proxy** (the oracle is trained on 10-mers of one framework; the generator makes 8- to 18-mers). No wet-lab validation. The scientific claims are about optimization dynamics — the loop optimizes an objective when it has headroom — not about experimentally validated binders. The contribution is a reproducible **method** and a set of controlled optimization experiments, not a designed therapeutic.
+
+## License
+
+`TODO` — see `LICENSE`.
 
 ## How to cite
 
